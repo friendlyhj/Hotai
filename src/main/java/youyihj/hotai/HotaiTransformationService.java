@@ -4,9 +4,14 @@ import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformationService;
 import cpw.mods.modlauncher.api.ITransformer;
 import cpw.mods.modlauncher.api.IncompatibleEnvironmentException;
+import org.badiff.Diff;
+import org.badiff.imp.MemoryDiff;
+import org.badiff.io.DefaultSerialization;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import youyihj.hotai.transformers.BytecodeTransformer;
+import youyihj.hotai.transformers.DiffTransformer;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -21,7 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author youyihj
  */
 public class HotaiTransformationService implements ITransformationService {
+    private final Map<String, Diff> transformedDiffes = new ConcurrentHashMap<>();
     private final Map<String, byte[]> transformedClasses = new ConcurrentHashMap<>();
+    private Path hotaiPath;
+
     public static final Logger LOGGER = LoggerFactory.getLogger("Hotai");
 
 
@@ -35,7 +43,7 @@ public class HotaiTransformationService implements ITransformationService {
         LOGGER.info("Reading patched classes");
         Optional<Path> gamePath = environment.getProperty(IEnvironment.Keys.GAMEDIR.get());
         gamePath.ifPresentOrElse(it -> {
-            Path hotaiPath = it.resolve("hotai");
+            hotaiPath = it.resolve("hotai");
             if (!Files.exists(hotaiPath)) {
                 try {
                     Files.createDirectory(hotaiPath);
@@ -48,9 +56,12 @@ public class HotaiTransformationService implements ITransformationService {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         if (file.toString().endsWith(".class")) {
-                            String fileName = hotaiPath.relativize(file).toString();
-                            String className = fileName.substring(0, fileName.length() - ".class".length()).replace(file.getFileSystem().getSeparator(), "/");
-                            transformedClasses.put(className, Files.readAllBytes(file));
+                            transformedClasses.put(getClassName(file, ".class"), Files.readAllBytes(file));
+                        }
+                        if (file.toString().endsWith(".badiff")) {
+                            MemoryDiff diff = new MemoryDiff();
+                            diff.deserialize(DefaultSerialization.newInstance(), Files.newInputStream(file));
+                            transformedDiffes.put(getClassName(file, ".badiff"), diff);
                         }
                         return FileVisitResult.CONTINUE;
                     }
@@ -68,6 +79,11 @@ public class HotaiTransformationService implements ITransformationService {
 
     @Override
     public @NotNull List<ITransformer> transformers() {
-        return List.of(new HotaiTransformer(transformedClasses));
+        return List.of(new BytecodeTransformer(hotaiPath, transformedClasses), new DiffTransformer(transformedDiffes));
+    }
+
+    private String getClassName(Path file, String extension) {
+        String fileName = hotaiPath.relativize(file).toString();
+        return fileName.substring(0, fileName.length() - extension.length()).replace(file.getFileSystem().getSeparator(), "/");
     }
 }
