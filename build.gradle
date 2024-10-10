@@ -4,6 +4,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.neoforged.gradle.userdev' version '7.0.145'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -116,9 +117,17 @@ dependencies {
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
+    implementation group: 'org.badiff', name: 'badiff', version: '1.2.1'
+
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+shadowJar {
+    dependencies {
+        include(dependency('org.badiff:badiff:1.2.1'))
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
