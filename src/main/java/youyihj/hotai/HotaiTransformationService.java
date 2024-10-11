@@ -8,6 +8,7 @@ import org.badiff.Diff;
 import org.badiff.imp.MemoryDiff;
 import org.badiff.io.DefaultSerialization;
 import org.jetbrains.annotations.NotNull;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import youyihj.hotai.transformers.BytecodeTransformer;
@@ -78,7 +79,7 @@ public class HotaiTransformationService implements ITransformationService {
     }
 
     @Override
-    public @NotNull List<ITransformer> transformers() {
+    public @NotNull List<ITransformer<ClassNode>> transformers() {
         return List.of(new BytecodeTransformer(hotaiPath, transformedClasses), new DiffTransformer(transformedDiffes));
     }
 

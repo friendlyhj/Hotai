@@ -2,6 +2,7 @@ package youyihj.hotai.transformers;
 
 import cpw.mods.modlauncher.api.ITransformer;
 import cpw.mods.modlauncher.api.ITransformerVotingContext;
+import cpw.mods.modlauncher.api.TargetType;
 import cpw.mods.modlauncher.api.TransformerVoteResult;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
@@ -40,10 +41,14 @@ public abstract class HotaiTransformer<T> implements ITransformer<ClassNode> {
     }
 
     @Override
-    public final @NotNull Set<Target> targets() {
+    public final @NotNull Set<Target<ClassNode>> targets() {
         return transformations.keySet().stream().map(Target::targetClass).collect(Collectors.toSet());
     }
 
     protected abstract byte[] transform(byte[] src, T transformation, String className);
 
+    @Override
+    public @NotNull TargetType<ClassNode> getTargetType() {
+        return TargetType.CLASS;
+    }
 }

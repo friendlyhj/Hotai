@@ -1,9 +1,11 @@
 package youyihj.hotai.transformers;
 
 import cpw.mods.modlauncher.api.ITransformer;
+import cpw.mods.modlauncher.api.TargetType;
 import org.badiff.MemoryDiffs;
 import org.badiff.imp.MemoryDiff;
 import org.badiff.io.DefaultSerialization;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 import youyihj.hotai.HotaiTransformationService;
 
